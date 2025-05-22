@@ -152,7 +152,7 @@ class decomp():
         if target_raw.mean() > 200 and self._target_variable == 'TREFHT':
             target_raw -= 273.15
 
-        # select only full seasons
+        # select only full seasons (relevant for DJF)
         self._days_per_year = target_raw.time[target_raw.time.dt.year == target_raw.time.dt.year[1000]].shape[0]
         l = []
         self._years = np.array([])
@@ -205,15 +205,6 @@ class decomp():
             gmt = self._data['gmt']._x
             gmt -= gmt.loc[:'1950']
             self._data['gmt'] = data_1D(gmt)
-
-    def smooth_gmt(self):
-        '''
-        smooth GMT timeseries with lowess filter
-        '''
-        x = self._data['gmt']._x.copy()
-        x_time = np.array([(t - cftime.DatetimeNoLeap(1900, 6, 1, )).days for t in x.time.values])
-        x.values = lowess(x.values, x_time, frac=3/4, return_sorted=False)
-        self._data['gmt'] = data_1D(x)
 
     ##############
     # covariate  #
