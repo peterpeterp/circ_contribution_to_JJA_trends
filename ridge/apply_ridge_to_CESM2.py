@@ -81,6 +81,8 @@ args = parser.parse_args()
 for k,v in vars(args).items():
     globals()[k] = v
 
+# sbatch job_poorga.sh python apply_ridge_to_CESM2.py --target_variable TREFHT --cov_variable Z500 --run_train 1300 --run_test --months 6 7 8 --period 1979 2023 --overwrite
+
 # prepare out dir
 out_path = '/climca/people/ppfleiderer/decomposition/decomp_out'
 tag = f"{target_variable}_{'m'.join([str(m) for m in months])}_{cov_variable}_vX_{run_train}_{period[0]}-{period[1]}"

@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, RidgeCV
 import dask
 from direct_effect_analysis import DirectEffectAnalysis
+from linear_regression import get_slope_and_pval
 
 import argparse
 parser = argparse.ArgumentParser()
