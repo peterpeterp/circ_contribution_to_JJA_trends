@@ -1,10 +1,11 @@
-import os,glob
+import os,glob,sys
 import xarray as xr
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, RidgeCV
 import dask
 from direct_effect_analysis import DirectEffectAnalysis
+sys.path.append('../')
 from linear_regression import get_slope_and_pval
 
 import argparse
@@ -94,13 +95,28 @@ n_cps = np.logspace(0.15, 2.2, 20).astype('int')
 dea = DirectEffectAnalysis(n_components='optimal', n_cps=n_cps, k_fold=5)
 dea.fit(X_train, Y_train, Z_train, fit_test=False)
 
+def transform_to_xarray(Y_):
+    Y_ = xr.DataArray(
+    Y_.reshape((-1, len(lats), len(lons))),
+        dims = trefht_nudge.dims,
+        coords = trefht_nudge.coords)
+    Y_ = Y_.assign_coords(year=Y_.time.dt.year)
+    Y_ = Y_.swap_dims({'time': 'year'})
+    Y_ = Y_.groupby('year').mean()
+    return Y_
+
 # prediction
 Y_dyn, Y_thermo = dea.counterfactual(Y_2d, gmst_nudge)
-Y_rec = Y_dyn + Y_thermo
-trends = LinearRegression().fit(np.arange(Y_rec.shape[0])[:,None], Y_rec).coef_
+
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn))
 xr.Dataset(
-    {'prediction':xr.DataArray(trends.reshape(len(lats), len(lons)) * 92, dims=['lat','lon'], coords=dict(lat=lats, lon=lons))}
-).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_train}_trend_{period}.nc')
+    {'slope':slope, 'pval':pval}
+).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_train}_trend_{period}_dyn.nc')
+
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_thermo))
+xr.Dataset(
+    {'slope':slope, 'pval':pval}
+).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_train}_trend_{period}_thermo.nc')
 
 ####################
 # Cross-validation #
@@ -124,9 +140,13 @@ gmst_nudge = gmst_nudge.sel(time=nc_trefht_recent['time.month'].isin(summer_mont
 Y_2d = trefht_recent.TREFHT.values.reshape((len(time), -1))
 Y_dyn, Y_thermo = dea.counterfactual(Y_2d, gmst_nudge)
 Y_rec = Y_dyn + Y_thermo
-trends = LinearRegression().fit(np.arange(Y_rec.shape[0])[:,None], Y_rec).coef_
+
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn))
 xr.Dataset(
-    {'prediction':xr.DataArray(trends.reshape(len(lats), len(lons)) * 92, dims=['lat','lon'], coords=dict(lat=lats, lon=lons))}
-).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_test}_trend_{period}.nc')
+    {'slope':slope, 'pval':pval}
+).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_test}_trend_{period}_dyn.nc')
 
-
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_thermo))
+xr.Dataset(
+    {'slope':slope, 'pval':pval}
+).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_test}_trend_{period}_thermo.nc')

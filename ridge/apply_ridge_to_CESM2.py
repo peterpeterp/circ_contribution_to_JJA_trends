@@ -81,11 +81,11 @@ args = parser.parse_args()
 for k,v in vars(args).items():
     globals()[k] = v
 
-# sbatch job_poorga.sh python apply_ridge_to_CESM2.py --target_variable TREFHT --cov_variable Z500 --run_train 1300 --run_test --months 6 7 8 --period 1979 2023 --overwrite
+# sbatch job_poorga.sh python apply_ridge_to_CESM2.py --target_variable TREFHT --cov_variable Z500 --run_train 1300 --run_test --months 6 7 8 --period 1979 2023 --alpha 1 --overwrite
 
 # prepare out dir
-out_path = '/climca/people/ppfleiderer/decomposition/decomp_out'
-tag = f"{target_variable}_{'m'.join([str(m) for m in months])}_{cov_variable}_vX_{run_train}_{period[0]}-{period[1]}"
+out_path = '/climca/people/ppfleiderer/decomposition/ridge_out'
+tag = f"{target_variable}_{'m'.join([str(m) for m in months])}_{cov_variable}_vX_alpha{alpha}_{run_train}_{period[0]}-{period[1]}"
 os.system(f'mkdir -p {out_path}/{tag}')
 
 # initialize data objects
@@ -178,5 +178,5 @@ def init(l):
     global lock
     lock = l
     
-p = multiprocessing.Pool(64, initializer=init, initargs=(multiprocessing.Lock(),))
-p.map(do_grid_cell, grid_cells)
+pool = multiprocessing.Pool(64, initializer=init, initargs=(multiprocessing.Lock(),))
+pool.map_async(do_grid_cell, grid_cells)
