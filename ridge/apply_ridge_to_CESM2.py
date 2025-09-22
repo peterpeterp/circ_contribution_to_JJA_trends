@@ -7,6 +7,12 @@ from dill.source import getsource
 import multiprocessing
 
 
+import psutil
+process = psutil.Process(os.getpid())
+mem_info = process.memory_info()
+# Get RSS (Resident Set Size) in MB
+rss_memory_mb = mem_info.rss / (1024 ** 2)
+
 from _ridge import *
 from _data_minimal import *
 
@@ -18,6 +24,8 @@ def write_line(file, line):
 
 def do_grid_cell(coords):
     index,lat,lon = coords
+
+    print(f"{coords} - Memory used: {rss_memory_mb:.2f} MB\n")
 
     cc_train.set_location(lon,lat)
     cc_train.select_location('target')
@@ -172,11 +180,13 @@ grid_cells = np.array([
             )
         ])
         if len(re.findall(f"\n{i},{c[0]},{c[1]},", txt)) == 0
-    ])
+    ]) 
 
 def init(l):
     global lock
     lock = l
     
-pool = multiprocessing.Pool(64, initializer=init, initargs=(multiprocessing.Lock(),))
+pool = multiprocessing.Pool(64, initializer=init, maxtasksperchild=1, initargs=(multiprocessing.Lock(),))
 pool.map_async(do_grid_cell, grid_cells)
+pool.close()
+pool.join()

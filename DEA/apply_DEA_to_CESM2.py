@@ -98,8 +98,8 @@ dea.fit(X_train, Y_train, Z_train, fit_test=False)
 def transform_to_xarray(Y_):
     Y_ = xr.DataArray(
     Y_.reshape((-1, len(lats), len(lons))),
-        dims = trefht_nudge.dims,
-        coords = trefht_nudge.coords)
+        dims = ['time','lat','lon'],
+        coords = dict(time=time, lat=lats, lon=lons))
     Y_ = Y_.assign_coords(year=Y_.time.dt.year)
     Y_ = Y_.swap_dims({'time': 'year'})
     Y_ = Y_.groupby('year').mean()
@@ -108,12 +108,12 @@ def transform_to_xarray(Y_):
 # prediction
 Y_dyn, Y_thermo = dea.counterfactual(Y_2d, gmst_nudge)
 
-slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn))
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn).load())
 xr.Dataset(
     {'slope':slope, 'pval':pval}
 ).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_train}_trend_{period}_dyn.nc')
 
-slope, pval = get_slope_and_pval(transform_to_xarray(Y_thermo))
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_thermo).load())
 xr.Dataset(
     {'slope':slope, 'pval':pval}
 ).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_train}_trend_{period}_thermo.nc')
@@ -141,12 +141,12 @@ Y_2d = trefht_recent.TREFHT.values.reshape((len(time), -1))
 Y_dyn, Y_thermo = dea.counterfactual(Y_2d, gmst_nudge)
 Y_rec = Y_dyn + Y_thermo
 
-slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn))
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn).load())
 xr.Dataset(
     {'slope':slope, 'pval':pval}
 ).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_test}_trend_{period}_dyn.nc')
 
-slope, pval = get_slope_and_pval(transform_to_xarray(Y_thermo))
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_thermo).load())
 xr.Dataset(
     {'slope':slope, 'pval':pval}
 ).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_test}_trend_{period}_thermo.nc')
