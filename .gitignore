@@ -6,6 +6,9 @@ DEA/job_poorga.sh
 DEA/launch_multiple.sh
 DEA/log
 
+*.pdf
+*.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
