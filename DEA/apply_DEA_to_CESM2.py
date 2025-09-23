@@ -118,6 +118,12 @@ xr.Dataset(
     {'slope':slope, 'pval':pval}
 ).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_train}_trend_{period}_thermo.nc')
 
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn + Y_thermo).load())
+xr.Dataset(
+    {'slope':slope, 'pval':pval}
+).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_train}_trend_{period}_rec.nc')
+
+
 ####################
 # Cross-validation #
 ####################
@@ -139,7 +145,6 @@ gmst_nudge = gmst_nudge.sel(time=nc_trefht_recent['time.month'].isin(summer_mont
 
 Y_2d = trefht_recent.TREFHT.values.reshape((len(time), -1))
 Y_dyn, Y_thermo = dea.counterfactual(Y_2d, gmst_nudge)
-Y_rec = Y_dyn + Y_thermo
 
 slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn).load())
 xr.Dataset(
@@ -150,3 +155,8 @@ slope, pval = get_slope_and_pval(transform_to_xarray(Y_thermo).load())
 xr.Dataset(
     {'slope':slope, 'pval':pval}
 ).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_test}_trend_{period}_thermo.nc')
+
+slope, pval = get_slope_and_pval(transform_to_xarray(Y_dyn + Y_thermo).load())
+xr.Dataset(
+    {'slope':slope, 'pval':pval}
+).to_netcdf(f'/climca/people/ppfleiderer/decomposition/DEA_homer/train{run_train}_test{run_test}_trend_{period}_rec.nc')
